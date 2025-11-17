@@ -1,4 +1,4 @@
-import Validator from 'params-verifier';
+import * as Validator from 'params-verifier';
 import {
   controller,
   interfaces,
@@ -122,14 +122,8 @@ export class AccessProfilesController implements interfaces.Controller {
         stringNoEmpty: true,
       });
 
-      if (!updatingRecord) {
-        paramValidator.field('createdBy', 'string', {
-          required: true,
-          validatorErrMsg: 'createdBy is required',
-          typeErrMsg: 'wrong value type on field createdBy',
-        });
-      } else {
-        paramValidator
+      if (updatingRecord) {
+         paramValidator
           .field('_id', 'string', {
             required: true,
             validatorErrMsg: '_id is required',
@@ -143,6 +137,8 @@ export class AccessProfilesController implements interfaces.Controller {
         if (!ObjectId.isValid(workingObj._id)) {
           throw 'field _id is not a valid  ObjecId';
         }
+      } else {
+       
       }
 
       paramValidator

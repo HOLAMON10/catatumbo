@@ -1,4 +1,4 @@
-import Validator from 'params-verifier';
+import * as Validator from 'params-verifier';
 import { controller, httpGet, httpPost, httpPut, interfaces } from 'inversify-express-utils';
 import { inject } from 'inversify';
 import { Request, Response } from 'express';

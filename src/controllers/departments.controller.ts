@@ -1,4 +1,4 @@
-import Validator from 'params-verifier';
+import * as Validator from 'params-verifier';
 import {
 	controller,
 	httpGet,

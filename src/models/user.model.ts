@@ -53,22 +53,6 @@ const schema = new Schema({
 		type: [],
 		required: false,
 	},
-	dashboardId: {
-		type: String,
-		required: false,
-	},
-	dashboardType: {
-		type: String,
-		required: false,
-	},
-	dashboardUrl: {
-		type: String,
-		required: false,
-	},
-	dashboardsList: {
-		type: [],
-		required: false,
-	},
 	userType: {
 		type: String,
 		ref: 'UserType',
@@ -99,24 +83,6 @@ const schema = new Schema({
 		type: Boolean,
 		required: false,
 		default: false,
-	},
-	createdBy: {
-		type: ObjectId,
-		ref: 'User',
-	},
-	createdDate: {
-		type: Number,
-		required: true,
-		default: Date.now(),
-	},
-	lastModificationUser: {
-		type: ObjectId,
-		ref: 'User',
-		required: false,
-	},
-	lastModificationDate: {
-		required: false,
-		type: Number,
 	},
 });
 schema.set('autoIndex', false);

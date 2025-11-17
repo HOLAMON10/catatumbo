@@ -1,4 +1,4 @@
-import Validator from 'params-verifier';
+import * as Validator from 'params-verifier';
 import {
 	controller,
 	interfaces,
@@ -133,29 +133,18 @@ export class UsersController implements interfaces.Controller {
 			const paramValidator = new Validator(workingObj, 'object', {
 				stringNoEmpty: true,
 			});
-			if (!updatingRecord) {
-				paramValidator.field('createdBy', 'string', {
-					required: true,
-					validatorErrMsg: 'createdBy is required',
-					typeErrMsg: 'wrong value type on field createdBy',
-				});
-			} else {
+			if (updatingRecord) {
 				paramValidator
 					.field('_id', 'string', {
 						required: true,
 						validatorErrMsg: '_id is required',
 						typeErrMsg: 'wrong value type on field _id',
 					})
-					.field('lastModificationUser', 'string', {
-						required: true,
-						validatorErrMsg: 'lastModificationUser is required',
-						typeErrMsg:
-							'wrong value type on field lastModificationUser',
-					});
 				if (!ObjectId.isValid(workingObj._id)) {
 					throw 'field _id is not a valid  ObjecId';
 				}
-			}
+				
+			} 
 
 			paramValidator
 				.field('firstName', 'string', {
@@ -188,64 +177,14 @@ export class UsersController implements interfaces.Controller {
 					validatorErrMsg: "isActive it's required",
 				});
 
-			// validate if dashboard is a valid string
-			if (workingObj.dashboardId) {
-				if (typeof workingObj.dashboardId !== 'string') {
-					throw 'wrong value type on field dashboardId';
-				}
-			}
-
-			// validate if dashboard is a valid string
-			if (workingObj.dashboardType) {
-				if (typeof workingObj.dashboardType !== 'string') {
-					throw 'wrong value type on field dashboardType';
-				}
-			}
-
-			// validate if dashboard is a valid string
-			if (workingObj.dashboardUrl) {
-				if (typeof workingObj.dashboardUrl !== 'string') {
-					throw 'wrong value type on field dashboardUrl';
-				}
-			}
-
 			// validate if allowedPermissions is an array
-			if (!Array.isArray(workingObj.allowedPermissions)) {
-				throw 'allowedPermissions is not an array';
-			}
-
-			// validate if allowedPermissions items are strings
-			workingObj.allowedPermissions.forEach((permissionsItem) => {
+			if (workingObj.allowedPermissions && !Array.isArray(workingObj.allowedPermissions)) {
+				workingObj.allowedPermissions.forEach((permissionsItem) => {
 				if (typeof permissionsItem !== 'string') {
 					throw 'one or more items of allowedPermissions are not a valid string';
 				}
 			});
-
-			// validate if dashboardsList is an array
-			if (!Array.isArray(workingObj.dashboardsList)) {
-				throw 'dashboardsList is not an array';
 			}
-
-			// validate each item inside dashboardsList
-			workingObj.dashboardsList.forEach((item) => {
-				if (item.dsahboardId && typeof item.dashboardId !== 'string') {
-					throw 'wrong value type on field dashboardId';
-				}
-
-				if (
-					item.dashboardName &&
-					typeof item.dashboardName !== 'string'
-				) {
-					throw 'wrong value type on field dashboardName';
-				}
-				if (
-					item.dashboardUrl &&
-					typeof item.dashboardUrl !== 'string'
-				) {
-					throw 'wrong value type on field dashboardUrl';
-				}
-			});
-
 			return {
 				_id: workingObj._id,
 				email: workingObj.email,
