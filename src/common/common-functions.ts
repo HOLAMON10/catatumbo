@@ -118,6 +118,19 @@ export class CommonFunctions {
               });
         return uuid;
     }
+    public static generateToken(payload: any, secretKey?: string, durationTimeIn_ms?: number) {
+        try {
+            const sKey = secretKey ? secretKey : process.env.AUTH_SECRET_KEY;
+            if (durationTimeIn_ms) {
+                return jwt.sign(payload, sKey, {
+                    expiresIn: durationTimeIn_ms.toString(),
+                });
+            }
+            return jwt.sign(payload, sKey);
+        } catch (ex) {
+            return ex.message;
+        }
+    }
 
     // transforms a word"s first letter into a uppercase letter
     // params:
@@ -231,19 +244,6 @@ export class CommonFunctions {
         return newDate;
     }
 
-    public static generateToken(payload: any, secretKey?: string, durationTimeIn_ms?: number) {
-        try {
-            const sKey = secretKey ? secretKey : process.env.AUTH_SECRET_KEY;
-            if (durationTimeIn_ms) {
-                return jwt.sign(payload, sKey, {
-                    expiresIn: durationTimeIn_ms.toString(),
-                });
-            }
-            return jwt.sign(payload, sKey);
-        } catch (ex) {
-            return ex.message;
-        }
-    }
 
     public static createHashData(payload: any): string {
         try {

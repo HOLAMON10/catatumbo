@@ -20,7 +20,6 @@ export interface AuthenticationServiceInterface {
   VerifyCredentials(
     email: string,
     password: string,
-    keepSessionAlive: boolean
   ): Promise<ServiceResultInterface>;
   VerifyKeepSessionAlive(userId: string): Promise<ServiceResultInterface>;
   VerifyToken(verificationToken: string): Promise<ServiceResultInterface>;

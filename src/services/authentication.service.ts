@@ -186,7 +186,6 @@ export class AuthenticationService implements AuthenticationServiceInterface {
   private async verifyCredentials(
     email: string,
     password: string,
-    keepSessionAlive: boolean
   ): Promise<ServiceResultInterface> {
     try {
       const dbResult = await UserSchema.findOne({
@@ -201,17 +200,19 @@ export class AuthenticationService implements AuthenticationServiceInterface {
       if (!dbResult.isActive) {
         throw new CredentialsErrorHandling('user is not active');
       }
-      // storing session config
-      dbResult.keepSessionAlive = keepSessionAlive;
       dbResult.markModified('User');
+      const authToken = await CommonFunctions.generateToken(
+				{ user: dbResult._id,
+          token: global.gearInfo.token 
+         },
+				global.gearInfo.secret,
+				 24 * 60 * 60 * 1000
+			);
       await dbResult.save();
-      // returning required data
+
       return {
         code: 'success',
-        detail: {
-          _id: dbResult._id,
-          email: dbResult.email,
-        },
+        detail: authToken
       };
     } catch (ex) {
       throw ex;

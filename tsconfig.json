@@ -10,7 +10,9 @@
     "strictNullChecks": false,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    
   },
   "files": ["./package.json", "./server.ts", "src/types/custom-global.d.ts","src/types/**/*.d.ts"],
   "include": ["./api/**/*.ts"],

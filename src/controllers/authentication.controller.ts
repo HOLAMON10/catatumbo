@@ -1,4 +1,4 @@
-import Validator from 'params-verifier';
+import * as Validator from 'params-verifier';
 import {
   controller,
   httpGet,
@@ -29,6 +29,7 @@ export class AuthenticationController implements interfaces.Controller {
   @httpPost('/verifycredentials')
   public async VerifyCredentials(req: Request, res: Response): Promise<void> {
     try {
+      console.log(req.body)
       const paramValidator = new Validator(req.body, 'object', {
         stringNoEmpty: true,
       });
@@ -48,7 +49,7 @@ export class AuthenticationController implements interfaces.Controller {
         await this.dataSrv.VerifyCredentials(
           req.body.email,
           req.body.password,
-          req.body.keepSessionAlive || false
+        
         );
       if (!serviceResult) {
         res.status(200).send({
@@ -63,6 +64,7 @@ export class AuthenticationController implements interfaces.Controller {
         res.status(statusCode).send(serviceResult);
       }
     } catch (ex) {
+      console.log(ex)
       handleErrorResponse(ex, res);
     }
   }
@@ -73,7 +75,7 @@ export class AuthenticationController implements interfaces.Controller {
     res: Response
   ): Promise<void> {
     try {
-      const paramValidator = new Validator(req.body, 'object', {
+      const paramValidator = Validator(req.body, 'object', {
         stringNoEmpty: true,
       });
       paramValidator.field('userId', 'string', {

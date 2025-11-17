@@ -28,40 +28,7 @@ server.setConfig((app): void => {
     app.use(express.urlencoded({ extended: true }));
     app.use(express.json({ limit: '250mb' }));
 
-    // Load environment configuration
-    const platformConfigService = ApiContainer.get<PlatformConfigsServiceInterface>(
-      ApiTypes.platformConfigsService
-    );
-
-    platformConfigService
-      .Search({}, ['environment'])
-      .then((value) => {
-        try {
-          if (!value?.detail?.[0]?.environment) {
-            CommonFunctions.printConsoleColor(
-              'Must specify the environment for the service',
-              PrintColorType.error
-            );
-            return;
-          }
-          global.serviceEnvironment = value.detail[0].environment;
-          CommonFunctions.printConsoleColor(
-            `Service environment: ${global.serviceEnvironment}`,
-            PrintColorType.success
-          );
-        } catch (ex: any) {
-          CommonFunctions.printConsoleColor(
-            `Error processing environment data: ${ex.message || ex}`,
-            PrintColorType.error
-          );
-        }
-      })
-      .catch((ex: any) => {
-        CommonFunctions.printConsoleColor(
-          `Failed to fetch environment config: ${ex.message || ex}`,
-          PrintColorType.error
-        );
-      });
+  
 
     // Authenticate with Moriarty
     (async () => {

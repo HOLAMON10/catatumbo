@@ -4,7 +4,8 @@ import jwt_decode from 'jwt-decode';
 import { NextFunction, Request, Response } from 'express';
 
 const freeAccessPaths = [
-  'health',
+  '/health',
+  '/auth/verifycredentials',
 ];
 
 const verifyToken = (token: string): boolean => {
@@ -18,6 +19,12 @@ const verifyToken = (token: string): boolean => {
 
 const verifyAuthorizationCode = (req: Request, res: Response, next: NextFunction) => {
   try {
+    for (const path of freeAccessPaths) {
+      if (req.path.startsWith(path)) {
+        return next();
+      }
+    }
+
     if (!req.headers['authorization']) {
       return res.status(401).send({
         code: 'unauthorized',
@@ -26,7 +33,9 @@ const verifyAuthorizationCode = (req: Request, res: Response, next: NextFunction
     }
 
     if (verifyToken(req.headers['authorization'])) {
-      const sessionToken = (jwt_decode(req.headers['authorization']) as any).token;
+ 
+
+      const sessionToken = (jwt_decode(req.headers['authorization']) as any).token || (jwt_decode(req.headers['authorization']) as any).user;
       if (!sessionToken) {
         return res.status(401).send({
           code: 'unauthorized',
@@ -34,30 +43,21 @@ const verifyAuthorizationCode = (req: Request, res: Response, next: NextFunction
         });
       }
 
-      let notRequireSessionPath = false;
-      freeAccessPaths.forEach((path) => {
-        if (req.path.includes(path)) {
-          notRequireSessionPath = true;
-        }
-      });
-      if (notRequireSessionPath) {
-        if (sessionToken !== global.gearInfo.token) {
-          throw new Error();
-        }
-      } else {
-        if (sessionToken !== global.gearInfo.token) {
-          return res.status(403).send({
-            code: 'forbidden',
-            detail: 'the authorization code is not valid',
-          });
-        }
+      if (sessionToken !== global.gearInfo.token) {
+        return res.status(403).send({
+          code: 'forbidden',
+          detail: 'the authorization code is not valid',
+        });
       }
+
       return next();
     }
+
     return res.status(403).send({
       code: 'forbidden',
       detail: 'the authorization code is not valid',
     });
+
   } catch (ex) {
     return res.status(403).send({
       code: 'forbidden',
