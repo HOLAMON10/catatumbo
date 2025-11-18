@@ -237,7 +237,6 @@ export class UsersService implements UsersServiceInterface {
 				},
 			};
 		} catch (ex) {
-			console.log(ex)
 			throw new DataBaseErrorHandling(
 				'error creating new user',
 				UserSchema.name,
