@@ -108,7 +108,7 @@ export class UsersController implements interfaces.Controller {
 		try {
 			let serviceResult: ServiceResultInterface =
 				await this.userSrv.Search(
-					req.body.workingObject,
+					req.body,
 					req.body.populateAll
 				);
 			if (serviceResult.code === 'error') {

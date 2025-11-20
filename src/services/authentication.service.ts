@@ -43,11 +43,6 @@ export class AuthenticationService implements AuthenticationServiceInterface {
         throw new CredentialsErrorHandling('user data not found');
       }
 
-      if (!dbResult.isActive && !dbResult.isConfirmed) {
-        throw new ValidationError(
-          'The request action cannot be performed'
-        );
-      }
 
       dbResult.verificationToken = CommonFunctions.generateUUID(false);
       dbResult.keepSessionAlive = false;
@@ -72,7 +67,7 @@ export class AuthenticationService implements AuthenticationServiceInterface {
     newPassword: string
   ): Promise<ServiceResultInterface> {
     try {
-      let dbResult: UserDocumentInterface = await UserSchema.findById(_id);
+      let dbResult: UserDocumentInterface  = await UserSchema.findById(_id);
       if (!dbResult) {
         throw new CredentialsErrorHandling('user data not found');
       }
@@ -251,7 +246,7 @@ export class AuthenticationService implements AuthenticationServiceInterface {
     try {
       let dbResult: UserDocumentInterface = await UserSchema.findOne({
         verificationToken,
-      }).select(['isConfirmed']);
+      });
       if (!dbResult) {
         return {
           code: 'tokenNotValid',
@@ -260,9 +255,7 @@ export class AuthenticationService implements AuthenticationServiceInterface {
       }
       return {
         code: 'success',
-        detail: {
-          isConfirmed: dbResult.isConfirmed,
-        },
+        detail: dbResult._id
       };
     } catch (ex) {
       throw ex;

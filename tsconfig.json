@@ -15,6 +15,6 @@
     
   },
   "files": ["./package.json", "./server.ts", "src/types/custom-global.d.ts","src/types/**/*.d.ts"],
-  "include": ["./api/**/*.ts"],
+  "include": ["./api/**/*.ts","src/**/*"],
   "exclude": ["node_modules", "docs"]
 }
