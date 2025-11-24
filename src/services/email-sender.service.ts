@@ -1,6 +1,7 @@
 import { injectable } from "inversify";
 import * as SibApiV3Sdk from 'sib-api-v3-sdk';
 import { EmailSenderServiceInterface } from "src/interfaces/services";
+
 @injectable()
 export class EmailService implements EmailSenderServiceInterface {
     public Send = this.sendEmail
@@ -33,7 +34,7 @@ export class EmailService implements EmailSenderServiceInterface {
             };
 
             const result = await this.apiInstance.sendTransacEmail(email);
-
+            console.log(result);
             return {
                 code: "success",
                 detail: result,

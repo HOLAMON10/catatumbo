@@ -8,6 +8,7 @@ const freeAccessPaths = [
   '/auth/verifycredentials',
   '/auth/verifytoken',
   '/auth/changepassword',
+  '/auth/createrecoverypasswordtoken',
 ];
 
 const verifyToken = (token: string): boolean => {

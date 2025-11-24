@@ -1,10 +1,12 @@
-import { injectable } from 'inversify';
+import { injectable,inject } from 'inversify';
 
 import { UserDocumentInterface, UserSchema } from '../models';
 import { UserModelInterface } from '../interfaces/models';
 import { AuthenticationServiceInterface } from '../interfaces/services';
 import { ServiceResultInterface } from '../interfaces/service-result.interface';
 import { CommonFunctions } from '../common';
+import { recoveryTokenEmailTemplate} from '../email-templates'
+import { EmailService } from './email-sender.service';
 import {
   CredentialsErrorHandling,
   DataBaseActions,
@@ -13,6 +15,7 @@ import {
   NotFoundDataHandling,
   ValidationError,
 } from '../error-handlers';
+import { ApiTypes } from '../apiTypes';
 
 @injectable()
 export class AuthenticationService implements AuthenticationServiceInterface {
@@ -28,38 +31,65 @@ export class AuthenticationService implements AuthenticationServiceInterface {
 
   //#endregion
 
-  public constructor() {}
+  public constructor(
+    @inject(ApiTypes.emailSenderService)
+	private readonly emailService: EmailService
+  ) {}
 
   //#region Private Functions
 
   private async createRecoveryPasswordToken(
-    email: string
+  email: string
   ): Promise<ServiceResultInterface> {
     try {
       const dbResult: UserDocumentInterface = await UserSchema.findOne({
         email: email.trim(),
       });
+
       if (!dbResult) {
-        throw new CredentialsErrorHandling('user data not found');
+        throw new CredentialsErrorHandling("user data not found");
       }
 
-
-      dbResult.verificationToken = CommonFunctions.generateUUID(false);
+      // 1️⃣ Generate 6-digit token
+      const token = CommonFunctions.generateSixDigitToken();
+      dbResult.verificationToken = token;
       dbResult.keepSessionAlive = false;
-      dbResult.markModified('UserInfo');
-      let updateResult = await dbResult.save();
-      if (updateResult._id) {
-        return {
-          code: 'success',
-          detail: dbResult.verificationToken,
-        };
-      } else {
-        throw new NotActionPerformedHandling('token was not generated');
+
+      dbResult.markModified("UserInfo");
+      const updateResult = await dbResult.save();
+
+      if (!updateResult._id) {
+        throw new NotActionPerformedHandling("token was not generated");
       }
+
+      // 2️⃣ Build the recovery URL
+      const recoveryLink = `${process.env.FRONTEND_URL}/recover`;
+
+      // 3️⃣ Insert data into HTML template
+      const emailHtml = recoveryTokenEmailTemplate
+        .replace("{{firstName}}", dbResult.firstName || "User")
+        .replace("{{email}}", dbResult.email)
+        .replace("{{token}}", token)
+        .replace("{{recoveryLink}}", recoveryLink);
+
+      // 4️⃣ Send email
+      await this.emailService.sendEmail(
+        dbResult.email,
+        "Your Password Recovery Code",
+        emailHtml,
+      );
+
+      return {
+        code: "success",
+        detail: true,
+      };
+
     } catch (ex) {
       throw ex;
     }
   }
+
+
 
   private async modifyPassword(
     _id: string,

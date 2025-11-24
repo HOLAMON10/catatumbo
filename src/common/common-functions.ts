@@ -118,6 +118,9 @@ export class CommonFunctions {
               });
         return uuid;
     }
+    public  static generateSixDigitToken(): string {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+        }
     public static generateToken(payload: any, secretKey?: string, durationTimeIn_ms?: number) {
         try {
             const sKey = secretKey ? secretKey : process.env.AUTH_SECRET_KEY;

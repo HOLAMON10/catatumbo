@@ -1,11 +1,11 @@
-export const verificationEmailTemplate = `
+export const recoveryTokenEmailTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />                                         
-    <title>Email Verification</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Recovery</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,12 +25,23 @@ export const verificationEmailTemplate = `
             color: #2c3e50;
             margin-bottom: 20px;
         }
+        .token-box {
+            margin: 25px 0;
+            padding: 15px 20px;
+            background: #1e88e5;
+            color: white;
+            font-size: 28px;
+            text-align: center;
+            border-radius: 8px;
+            letter-spacing: 6px;
+            font-weight: bold;
+        }
         a.button {
             display: inline-block;
             margin-top: 20px;
             padding: 12px 20px;
             background: #1e88e5;
-            color: #ffffff;
+            color: #ffffff !important;
             text-decoration: none;
             border-radius: 6px;
             font-size: 16px;
@@ -47,19 +58,24 @@ export const verificationEmailTemplate = `
     <div class="container">
         <h2>Hello {{firstName}},</h2>
 
-        <p>Your account is almost ready — just one final breath of confirmation remains.</p>
+        <p>A request to reset your password has been received.</p>
 
-        <p>Please verify your email by clicking the link below:</p>
+        <p>Your 6-digit recovery code:</p>
 
-        <a href="{{verificationLink}}" class="button">Verify Email</a>
+        <div class="token-box">
+            {{token}}
+        </div>
 
-        <p>If the button above does not open, you may also copy this link into your browser:</p>
+        <p>You may also click the button below to reset your password:</p>
 
-        <p>{{verificationLink}}</p>
+        <a href="{{recoveryLink}}" class="button">Reset Password</a>
+
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p>{{recoveryLink}}</p>
 
         <div class="footer">
             This message was sent to {{email}}.<br />
-            If you did not request this, you may safely ignore the message.
+            If this wasn’t you, no changes have been made.
         </div>
     </div>
 </body>

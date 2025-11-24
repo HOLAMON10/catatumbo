@@ -92,12 +92,11 @@ export class UsersService implements UsersServiceInterface {
             .replace(/{{email}}/g, workingObj.email)
             .replace(/{{verificationLink}}/g, verificationLink);
 
-        // send email
-        await this.emailService.sendEmail(
+        console.log(await this.emailService.sendEmail(
              workingObj.email,
             'Confirm Your Email Address',
              htmlBody,
-        );
+        ));
 
         return {
             code: 'success',
