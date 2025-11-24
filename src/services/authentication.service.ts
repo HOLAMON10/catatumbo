@@ -1,10 +1,12 @@
-import { injectable } from 'inversify';
+import { injectable, inject } from 'inversify';
 
 import { UserDocumentInterface, UserSchema } from '../models';
 import { UserModelInterface } from '../interfaces/models';
 import { AuthenticationServiceInterface } from '../interfaces/services';
 import { ServiceResultInterface } from '../interfaces/service-result.interface';
 import { CommonFunctions } from '../common';
+import { recoveryTokenEmailTemplate } from '../email-templates';
+import { EmailService } from './email-sender.service';
 import {
 	CredentialsErrorHandling,
 	DataBaseActions,
@@ -13,6 +15,7 @@ import {
 	NotFoundDataHandling,
 	ValidationError,
 } from '../error-handlers';
+import { ApiTypes } from '../apiTypes';
 
 @injectable()
 export class AuthenticationService implements AuthenticationServiceInterface {
@@ -28,7 +31,10 @@ export class AuthenticationService implements AuthenticationServiceInterface {
 
 	//#endregion
 
-	public constructor() {}
+	public constructor(
+		@inject(ApiTypes.emailSenderService)
+		private readonly emailService: EmailService
+	) {}
 
 	//#region Private Functions
 
@@ -37,6 +43,7 @@ export class AuthenticationService implements AuthenticationServiceInterface {
 			const dbResult: UserDocumentInterface = await UserSchema.findOne({
 				email: email.trim(),
 			});
+
 			if (!dbResult) {
 				throw new CredentialsErrorHandling('user data not found');
 			}

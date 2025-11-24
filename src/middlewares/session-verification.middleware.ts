@@ -6,6 +6,9 @@ import { NextFunction, Request, Response } from 'express';
 const freeAccessPaths = [
   '/health',
   '/auth/verifycredentials',
+  '/auth/verifytoken',
+  '/auth/changepassword',
+  '/auth/createrecoverypasswordtoken',
 ];
 
 const verifyToken = (token: string): boolean => {

@@ -1,4 +1,4 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 import {
 	AccessProfileSchema,
@@ -10,6 +10,7 @@ import { UserModelInterface } from '../interfaces/models';
 import { UsersServiceInterface } from '../interfaces/services';
 import { ServiceResultInterface } from '../interfaces/service-result.interface';
 import { CommonFunctions } from '../common/common-functions';
+import { EmailService } from './email-sender.service';
 import {
 	DataBaseActions,
 	DataBaseErrorHandling,
@@ -17,7 +18,8 @@ import {
 	RecordAlreadyCreatedHandling,
 	ValidationError,
 } from '../error-handlers';
-
+import { verificationEmailTemplate } from '../email-templates';
+import { ApiTypes } from '../apiTypes';
 @injectable()
 export class UsersService implements UsersServiceInterface {
 	//#region Public Properties
@@ -51,42 +53,60 @@ export class UsersService implements UsersServiceInterface {
 		'lastModificationUser',
 		'lastModificationDate',
 	];
-
-	public constructor() {}
-
+	public constructor(
+	@inject(ApiTypes.emailSenderService)
+	private readonly emailService: EmailService
+	) {}
 	//#region Private Functions
 
 	private async createRecord(
-		workingObj: UserModelInterface
-	): Promise<ServiceResultInterface> {
-		try {
-			let result: any;
-			// validating if the user has been created previously
-			const dbResult: UserDocumentInterface = await UserSchema.findOne({
-				email: workingObj.email.trim(),
-			});
+    workingObj: UserModelInterface
+): Promise<ServiceResultInterface> {
+    try {
+        // validating if the user has been created previously
+        const dbResult: UserDocumentInterface = await UserSchema.findOne({
+            email: workingObj.email.trim(),
+        });
 
-			// validating if the record is already created
-			if (dbResult) {
-				throw new RecordAlreadyCreatedHandling(
-					`the user with email "${workingObj.email}" is already created`
-				);
-			}
+        if (dbResult) {
+            throw new RecordAlreadyCreatedHandling(
+                `the user with email "${workingObj.email}" is already created`
+            );
+        }
 
-			// validate if userPermissions items exists and if it's activated
-			if (workingObj.allowedPermissions?.length) {
-				this.validateUserPermissions(workingObj.allowedPermissions);
-			}
+        // validate permissions
+        if (workingObj.allowedPermissions?.length) {
+            this.validateUserPermissions(workingObj.allowedPermissions);
+        }
 
-			result = await this.insert(workingObj);
-			return {
-				code: 'success',
-				detail: result,
-			};
-		} catch (ex) {
-			throw ex;
-		}
-	}
+        // create user + verification token
+        const result: any = await this.insert(workingObj);
+        const { verificationToken } = result.result;
+
+        // build the verification link
+        const verificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
+
+        // fill template
+        const htmlBody = verificationEmailTemplate
+            .replace(/{{firstName}}/g, workingObj.firstName || '')
+            .replace(/{{email}}/g, workingObj.email)
+            .replace(/{{verificationLink}}/g, verificationLink);
+
+        console.log(await this.emailService.sendEmail(
+             workingObj.email,
+            'Confirm Your Email Address',
+             htmlBody,
+        ));
+
+        return {
+            code: 'success',
+            detail: result,
+        };
+    } catch (ex) {
+        throw ex;
+    }
+}
+
 
 	private async modifyRecord(
 		workingObj: UserModelInterface
@@ -237,7 +257,6 @@ export class UsersService implements UsersServiceInterface {
 				},
 			};
 		} catch (ex) {
-			console.log(ex)
 			throw new DataBaseErrorHandling(
 				'error creating new user',
 				UserSchema.name,

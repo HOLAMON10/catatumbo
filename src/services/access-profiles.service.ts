@@ -155,7 +155,6 @@ export class AccessProfilesService implements AccessProfilesServiceInterface {
       workingObject.description = newObject.description;
       workingObject.menuOptions = newObject.menuOptions;
       workingObject.isActive = newObject.isActive;
-      workingObject.lastModificationUser = newObject.lastModificationUser;
       workingObject.lastModificationDate = new Date();
       workingObject.markModified(AccessProfileSchema.modelName);
       const result = await workingObject.save();

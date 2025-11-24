@@ -7,7 +7,7 @@ import {
     AddressCountiesServiceInterface,
     AddressDistrictsServiceInterface,
     AddressProvincesServiceInterface,
-
+    EmailSenderServiceInterface,
     AuthenticationServiceInterface,
     CandidateJobApplicationsServiceInterface,
     CandidatesServiceInterface,
@@ -28,7 +28,7 @@ import {
     AddressDistrictsService,
     AddressProvincesService,
 
-    
+    EmailService,
     AuthenticationService,
    
     CandidateJobApplicationsService,
@@ -66,6 +66,7 @@ ApiContainer.bind<AddressProvincesServiceInterface>(ApiTypes.addressProvincesSer
 
 // AgentStatusesService
 
+ApiContainer.bind<EmailSenderServiceInterface>(ApiTypes.emailSenderService).to(EmailService);
 
 // AuthenticationService
 ApiContainer.bind<AuthenticationServiceInterface>(ApiTypes.authService).to(AuthenticationService);
