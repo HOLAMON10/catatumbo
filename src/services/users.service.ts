@@ -293,6 +293,7 @@ export class UsersService implements UsersServiceInterface {
 			}
 			workingObject.lastModificationUser = newObject.lastModificationUser;
 			workingObject.lastModificationDate = Date.now();
+			console.log(workingObject);
 			workingObject.markModified(UserSchema.modelName);
 			const result = await workingObject.save();
 			return {

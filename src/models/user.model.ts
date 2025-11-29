@@ -49,6 +49,10 @@ const schema = new Schema({
 		ref: 'AccessProfile',
 		required: false,
 	},
+	dashboardUrl:{
+		type: String,
+		required: false,
+	},
 	allowedPermissions: {
 		type: [],
 		required: false,
