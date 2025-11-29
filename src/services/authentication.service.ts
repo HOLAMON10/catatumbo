@@ -1,295 +1,257 @@
-import { injectable,inject } from 'inversify';
+import { injectable, inject } from 'inversify';
 
 import { UserDocumentInterface, UserSchema } from '../models';
 import { UserModelInterface } from '../interfaces/models';
 import { AuthenticationServiceInterface } from '../interfaces/services';
 import { ServiceResultInterface } from '../interfaces/service-result.interface';
 import { CommonFunctions } from '../common';
-import { recoveryTokenEmailTemplate} from '../email-templates'
+import { recoveryTokenEmailTemplate } from '../email-templates';
 import { EmailService } from './email-sender.service';
 import {
-  CredentialsErrorHandling,
-  DataBaseActions,
-  DataBaseErrorHandling,
-  NotActionPerformedHandling,
-  NotFoundDataHandling,
-  ValidationError,
+	CredentialsErrorHandling,
+	DataBaseActions,
+	DataBaseErrorHandling,
+	NotActionPerformedHandling,
+	NotFoundDataHandling,
+	ValidationError,
 } from '../error-handlers';
 import { ApiTypes } from '../apiTypes';
 
 @injectable()
 export class AuthenticationService implements AuthenticationServiceInterface {
-  //#region Public Properties
+	//#region Public Properties
 
-  public CreateRecoveryPasswordToken = this.createRecoveryPasswordToken;
-  public ModifyPassword = this.modifyPassword;
-  public RegisterPassword = this.registerPassword;
-  public RemoveUserCredentials = this.removeUserCredentials;
-  public VerifyCredentials = this.verifyCredentials;
-  public VerifyKeepSessionAlive = this.verifyKeepSessionAlive;
-  public VerifyToken = this.verifyToken;
+	public CreateRecoveryPasswordToken = this.createRecoveryPasswordToken;
+	public ModifyPassword = this.modifyPassword;
+	public RegisterPassword = this.registerPassword;
+	public RemoveUserCredentials = this.removeUserCredentials;
+	public VerifyCredentials = this.verifyCredentials;
+	public VerifyKeepSessionAlive = this.verifyKeepSessionAlive;
+	public VerifyToken = this.verifyToken;
 
-  //#endregion
+	//#endregion
 
-  public constructor(
-    @inject(ApiTypes.emailSenderService)
-	private readonly emailService: EmailService
-  ) {}
+	public constructor(
+		@inject(ApiTypes.emailSenderService)
+		private readonly emailService: EmailService
+	) {}
 
-  //#region Private Functions
+	//#region Private Functions
 
-  private async createRecoveryPasswordToken(
-  email: string
-  ): Promise<ServiceResultInterface> {
-    try {
-      const dbResult: UserDocumentInterface = await UserSchema.findOne({
-        email: email.trim(),
-      });
+	private async createRecoveryPasswordToken(email: string): Promise<ServiceResultInterface> {
+		try {
+			const dbResult: UserDocumentInterface = await UserSchema.findOne({
+				email: email.trim(),
+			});
 
-      if (!dbResult) {
-        throw new CredentialsErrorHandling("user data not found");
-      }
+			if (!dbResult) {
+				throw new CredentialsErrorHandling('user data not found');
+			}
 
-      // 1️⃣ Generate 6-digit token
-      const token = CommonFunctions.generateSixDigitToken();
-      dbResult.verificationToken = token;
-      dbResult.keepSessionAlive = false;
+			if (!dbResult.isActive && !dbResult.isConfirmed) {
+				throw new ValidationError('The request action cannot be performed');
+			}
 
-      dbResult.markModified("UserInfo");
-      const updateResult = await dbResult.save();
+			dbResult.verificationToken = CommonFunctions.generateUUID(false);
+			dbResult.keepSessionAlive = false;
+			dbResult.markModified('UserInfo');
+			let updateResult = await dbResult.save();
+			if (updateResult._id) {
+				return {
+					code: 'success',
+					detail: dbResult.verificationToken,
+				};
+			} else {
+				throw new NotActionPerformedHandling('token was not generated');
+			}
+		} catch (ex) {
+			throw ex;
+		}
+	}
 
-      if (!updateResult._id) {
-        throw new NotActionPerformedHandling("token was not generated");
-      }
+	private async modifyPassword(
+		_id: string,
+		currentPassword: string = null,
+		newPassword: string
+	): Promise<ServiceResultInterface> {
+		try {
+			let dbResult: UserDocumentInterface = await UserSchema.findById(_id);
+			if (!dbResult) {
+				throw new CredentialsErrorHandling('user data not found');
+			}
+			if (currentPassword) {
+				if (dbResult.password && dbResult.password !== require('md5')(currentPassword)) {
+					throw new CredentialsErrorHandling('user data not found');
+				}
+			}
+			dbResult.password = require('md5')(newPassword);
+			dbResult.verificationToken = null;
+			dbResult.markModified('User');
 
-      // 2️⃣ Build the recovery URL
-      const recoveryLink = `${process.env.FRONTEND_URL}/recover`;
+			let updateResult = await dbResult.save();
+			if (updateResult._id) {
+				return Promise.resolve({
+					code: 'success',
+					detail: 'password modified',
+				});
+			} else {
+				throw new NotActionPerformedHandling('password not modified');
+			}
+		} catch (ex) {
+			throw ex;
+		}
+	}
 
-      // 3️⃣ Insert data into HTML template
-      const emailHtml = recoveryTokenEmailTemplate
-        .replace("{{firstName}}", dbResult.firstName || "User")
-        .replace("{{email}}", dbResult.email)
-        .replace("{{token}}", token)
-        .replace("{{recoveryLink}}", recoveryLink);
+	private async registerPassword(
+		email: string,
+		verificationToken: string,
+		password: string,
+		endingRegistration: boolean
+	): Promise<ServiceResultInterface> {
+		try {
+			//getting user information
+			const userInformation = await UserSchema.findOne({
+				email,
+				verificationToken,
+			});
 
-      // 4️⃣ Send email
-      await this.emailService.sendEmail(
-        dbResult.email,
-        "Your Password Recovery Code",
-        emailHtml,
-      );
+			if (!userInformation) {
+				throw new NotFoundDataHandling('The email and the token were not found');
+			}
+			if (endingRegistration && userInformation.isConfirmed) {
+				throw new CredentialsErrorHandling('The user is already registered.');
+			}
+			userInformation.password = require('md5')(password);
+			userInformation.verificationToken = null;
+			userInformation.isConfirmed = true;
+			userInformation.markModified('UserInfo');
+			await userInformation.save();
 
-      return {
-        code: "success",
-        detail: true,
-      };
+			return {
+				code: 'success',
+			};
+		} catch (ex) {
+			throw ex;
+		}
+	}
 
-    } catch (ex) {
-      throw ex;
-    }
-  }
+	private async removeUserCredentials(workingObject: UserModelInterface): Promise<ServiceResultInterface> {
+		try {
+			let dbResult: UserDocumentInterface = await UserSchema.findById(workingObject._id);
 
+			if (!dbResult) {
+				throw new NotFoundDataHandling(`User not found for _id ${workingObject._id}`);
+			}
 
+			return {
+				code: 'success',
+				detail: await this.updateCredentials(dbResult),
+			};
+		} catch (ex) {
+			throw ex;
+		}
+	}
 
-  private async modifyPassword(
-    _id: string,
-    currentPassword: string = null,
-    newPassword: string
-  ): Promise<ServiceResultInterface> {
-    try {
-      let dbResult: UserDocumentInterface  = await UserSchema.findById(_id);
-      if (!dbResult) {
-        throw new CredentialsErrorHandling('user data not found');
-      }
-      if (currentPassword) {
-        if (
-          dbResult.password &&
-          dbResult.password !== require('md5')(currentPassword)
-        ) {
-          throw new CredentialsErrorHandling('user data not found');
-        }
-      }
-      dbResult.password = require('md5')(newPassword);
-      dbResult.verificationToken = null;
-      dbResult.markModified('User');
+	private async updateCredentials(workingObject: UserDocumentInterface): Promise<any> {
+		try {
+			workingObject.isActive = false;
+			workingObject.isConfirmed = false;
+			workingObject.password = null;
+			workingObject.verificationToken = null;
 
-      let updateResult = await dbResult.save();
-      if (updateResult._id) {
-        return Promise.resolve({
-          code: 'success',
-          detail: 'password modified',
-        });
-      } else {
-        throw new NotActionPerformedHandling('password not modified');
-      }
-    } catch (ex) {
-      throw ex;
-    }
-  }
-
-  private async registerPassword(
-    email: string,
-    verificationToken: string,
-    password: string,
-    endingRegistration: boolean
-  ): Promise<ServiceResultInterface> {
-    try {
-      //getting user information
-      const userInformation = await UserSchema.findOne({
-        email,
-        verificationToken,
-      });
-
-      if (!userInformation) {
-        throw new NotFoundDataHandling(
-          'The email and the token were not found'
-        );
-      }
-      if (endingRegistration && userInformation.isConfirmed) {
-        throw new CredentialsErrorHandling('The user is already registered.');
-      }
-      userInformation.password = require('md5')(password);
-      userInformation.verificationToken = null;
-      userInformation.isConfirmed = true;
-      userInformation.markModified('UserInfo');
-      await userInformation.save();
-
-      return {
-        code: 'success',
-      };
-    } catch (ex) {
-      throw ex;
-    }
-  }
-
-  private async removeUserCredentials(
-    workingObject: UserModelInterface
-  ): Promise<ServiceResultInterface> {
-    try {
-      let dbResult: UserDocumentInterface = await UserSchema.findById(
-        workingObject._id
-      );
-
-      if (!dbResult) {
-        throw new NotFoundDataHandling(
-          `User not found for _id ${workingObject._id}`
-        );
-      }
-
-      return {
-        code: 'success',
-        detail: await this.updateCredentials(dbResult),
-      };
-    } catch (ex) {
-      throw ex;
-    }
-  }
-
-  private async updateCredentials(
-    workingObject: UserDocumentInterface
-  ): Promise<any> {
-    try {
-      workingObject.isActive = false;
-      workingObject.isConfirmed = false;
-      workingObject.password = null;
-      workingObject.verificationToken = null;
-
-      const result = await workingObject.save();
-      return {
-        actionPerformed: 'dataModification',
-        result: result._id,
-      };
-    } catch (ex) {
-      throw new DataBaseErrorHandling(
-        'Error modifying user credentials',
-        UserSchema.name,
-        DataBaseActions.update
-      );
-    }
-  }
-
-  private async verifyCredentials(
-    email: string,
-    password: string,
-  ): Promise<ServiceResultInterface> {
-    try {
-      const dbResult = await UserSchema.findOne({
-        email: email,
-      });
-      if (!dbResult) {
-        throw new CredentialsErrorHandling('user data not found');
-      }
-      if (dbResult.password !== require('md5')(password)) {
-        throw new CredentialsErrorHandling('user credentials not valid');
-      }
-      if (!dbResult.isActive) {
-        throw new CredentialsErrorHandling('user is not active');
-      }
-      dbResult.markModified('User');
-      const authToken = await CommonFunctions.generateToken(
-				{ user: dbResult._id,
-          token: global.gearInfo.token 
-         },
-				global.gearInfo.secret,
-				 24 * 60 * 60 * 1000
+			const result = await workingObject.save();
+			return {
+				actionPerformed: 'dataModification',
+				result: result._id,
+			};
+		} catch (ex) {
+			throw new DataBaseErrorHandling(
+				'Error modifying user credentials',
+				UserSchema.name,
+				DataBaseActions.update
 			);
-      await dbResult.save();
+		}
+	}
 
-      return {
-        code: 'success',
-        detail: authToken
-      };
-    } catch (ex) {
-      throw ex;
-    }
-  }
+	private async verifyCredentials(email: string, password: string): Promise<ServiceResultInterface> {
+		try {
+			const dbResult = await UserSchema.findOne({
+				email: email,
+			});
+			console.log('test', dbResult);
 
-  private async verifyKeepSessionAlive(
-    userId: string
-  ): Promise<ServiceResultInterface> {
-    try {
-      let dbResult: UserDocumentInterface = await UserSchema.findById(
-        userId
-      ).select(['isActive', 'isConfirmed', 'keepSessionAlive']);
-      if (!dbResult) {
-        throw new NotFoundDataHandling(`user with id ${userId} was not found`);
-      }
-      // validating user
-      if (!dbResult.isActive) {
-        throw new ValidationError(`user with id ${userId} is not active`);
-      }
-      if (!dbResult.isConfirmed) {
-        throw new ValidationError(`user with id ${userId} is not confirmed`);
-      }
-      return {
-        code: 'success',
-        detail: dbResult.keepSessionAlive,
-      };
-    } catch (ex) {
-      throw ex;
-    }
-  }
+			if (!dbResult) {
+				throw new CredentialsErrorHandling('user data not found');
+			}
+			if (dbResult.password !== require('md5')(password)) {
+				throw new CredentialsErrorHandling('user credentials not valid');
+			}
+			if (!dbResult.isActive) {
+				throw new CredentialsErrorHandling('user is not active');
+			}
+			dbResult.markModified('User');
+			const authToken = await CommonFunctions.generateToken(
+				{ user: dbResult._id, token: global.gearInfo.token },
+				global.gearInfo.secret,
+				24 * 60 * 60 * 1000
+			);
+			await dbResult.save();
 
-  private async verifyToken(
-    verificationToken: string
-  ): Promise<ServiceResultInterface> {
-    try {
-      let dbResult: UserDocumentInterface = await UserSchema.findOne({
-        verificationToken,
-      });
-      if (!dbResult) {
-        return {
-          code: 'tokenNotValid',
-          detail: 'the token is not valid',
-        };
-      }
-      return {
-        code: 'success',
-        detail: dbResult._id
-      };
-    } catch (ex) {
-      throw ex;
-    }
-  }
-  //#endregion
+			return {
+				code: 'success',
+				detail: authToken,
+			};
+		} catch (ex) {
+			throw ex;
+		}
+	}
+
+	private async verifyKeepSessionAlive(userId: string): Promise<ServiceResultInterface> {
+		try {
+			let dbResult: UserDocumentInterface = await UserSchema.findById(userId).select([
+				'isActive',
+				'isConfirmed',
+				'keepSessionAlive',
+			]);
+			if (!dbResult) {
+				throw new NotFoundDataHandling(`user with id ${userId} was not found`);
+			}
+			// validating user
+			if (!dbResult.isActive) {
+				throw new ValidationError(`user with id ${userId} is not active`);
+			}
+			if (!dbResult.isConfirmed) {
+				throw new ValidationError(`user with id ${userId} is not confirmed`);
+			}
+			return {
+				code: 'success',
+				detail: dbResult.keepSessionAlive,
+			};
+		} catch (ex) {
+			throw ex;
+		}
+	}
+
+	private async verifyToken(verificationToken: string): Promise<ServiceResultInterface> {
+		try {
+			let dbResult: UserDocumentInterface = await UserSchema.findOne({
+				verificationToken,
+			}).select(['isConfirmed']);
+			if (!dbResult) {
+				return {
+					code: 'tokenNotValid',
+					detail: 'the token is not valid',
+				};
+			}
+			return {
+				code: 'success',
+				detail: {
+					isConfirmed: dbResult.isConfirmed,
+				},
+			};
+		} catch (ex) {
+			throw ex;
+		}
+	}
+	//#endregion
 }
