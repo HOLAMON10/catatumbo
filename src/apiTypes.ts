@@ -30,4 +30,5 @@ export const ApiTypes = {
     platformConfigsService: 'platformConfigsService',
     usersService: 'usersService',
     vacationBalanceService: 'vacationBalanceService',
+    employeesService: 'employeesService',
 };

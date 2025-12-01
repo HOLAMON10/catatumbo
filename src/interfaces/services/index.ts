@@ -15,3 +15,5 @@ export * from './meeting-room-reservations.service.interface';
 export * from './meeting-rooms.service.interface';
 export * from './platform-configs.service.interface';
 export * from './users-info.service.interface';
+export * from './employees.service.interface';
+

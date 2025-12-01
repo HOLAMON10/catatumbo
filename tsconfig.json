@@ -14,7 +14,7 @@
     "allowSyntheticDefaultImports": true,
     
   },
-  "files": ["./package.json", "./server.ts", "src/types/custom-global.d.ts","src/types/**/*.d.ts"],
+  "files": ["./package.json", "./server.ts", "src/types/custom-global.d.ts"],
   "include": ["./api/**/*.ts"],
   "exclude": ["node_modules", "docs"]
 }

@@ -23,3 +23,5 @@ export * from './user-type.model';
 export * from './user.model';
 export * from './agent.model';
 export * from './job-application-status.model';
+export * from './employee.model';
+

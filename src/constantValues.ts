@@ -32,4 +32,5 @@ export class ConstantValues {
     public static platformconfigs: string = '/platformconfigs';
     public static users: string = '/users';
     public static vacationbalance: string = '/vacationbalance';
+    public static employees: string = '/employees';
 }

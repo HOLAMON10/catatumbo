@@ -30,3 +30,4 @@ export * from './job-position.model.interface';
 export * from './job-application-status.model.interface';
 export * from './agent-changing-status-detail.interface';
 export * from './/agent.model.interface';
+export * from './employee.model.interface';

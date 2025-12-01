@@ -1,6 +1,7 @@
 import { Container } from 'inversify';
 import 'reflect-metadata';
 
+import { EmployeesService } from './services';
 import { ApiTypes } from './apiTypes';
 import {
     AccessProfilesServiceInterface,
@@ -94,12 +95,11 @@ ApiContainer.bind<EmployeeAssistancesServiceInterface>(ApiTypes.employeeAssistan
 // EmployeeTeamsService
 ApiContainer.bind<EmployeeTeamsServiceInterface>(ApiTypes.employeeTeamsService).to(EmployeeTeamsService);
 
-
-
 // HealthService
 ApiContainer.bind<HealthServiceInterface>(ApiTypes.healthService).to(HealthService);
 
-
+// EmployeesService
+ApiContainer.bind<any>(ApiTypes.employeesService).to(EmployeesService);
 
 // JobPositionsService
 ApiContainer.bind<JobPositionsServiceInterface>(ApiTypes.jobPositionsService).to(JobPositionsService);

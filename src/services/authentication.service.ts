@@ -191,11 +191,13 @@ export class AuthenticationService implements AuthenticationServiceInterface {
       const dbResult = await UserSchema.findOne({
         email: email,
       });
+      console.log('dbResult', dbResult);
       if (!dbResult) {
         throw new CredentialsErrorHandling('user data not found');
       }
       if (dbResult.password !== require('md5')(password)) {
         throw new CredentialsErrorHandling('user credentials not valid');
+        console.log('eerorr');
       }
       if (!dbResult.isActive) {
         throw new CredentialsErrorHandling('user is not active');

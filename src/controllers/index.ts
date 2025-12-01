@@ -15,3 +15,5 @@ export * from './meeting-room-reservations.controller';
 export * from './meeting-rooms.controller';
 export * from './platform-configs.controller';
 export * from './users.controller';
+export * from './employees.controller';
+
