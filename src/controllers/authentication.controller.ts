@@ -116,7 +116,7 @@ export class AuthenticationController implements interfaces.Controller {
           typeErrMsg: 'wrong value type on field _id',
         })
         .field('currentPassword', 'string', {
-          required: true,
+          required: false,
           validatorErrMsg: 'currentPassword is required',
           typeErrMsg: 'wrong value type on field currentPassword',
         })

@@ -10,7 +10,6 @@ export interface CandidateModelInterface {
   addressProvince: string;
   addressCounty: string;
   addressDistrict: string;
-  udcPK?: string;
   createdBy?: any;
   createdDate?: number;
   lastModificationBy?: string;

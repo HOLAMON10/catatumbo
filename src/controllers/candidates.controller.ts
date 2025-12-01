@@ -157,9 +157,6 @@ export class CandidatesController implements interfaces.Controller {
                 if (!ObjectId.isValid(workingObj._id)) {
                     throw 'field _id is not a valid  ObjecId';
                 }
-                if (workingObj.udcPK && typeof workingObj.udcPK !== 'string') {
-                    throw 'the type of udcPK is not string';
-                }
                 if (workingObj.imageUrl && typeof workingObj.imageUrl !== 'string') {
                     throw 'the type of imageUrl is not string';
                 }
@@ -228,7 +225,6 @@ export class CandidatesController implements interfaces.Controller {
                 addressProvince: workingObj.addressProvince,
                 addressDistrict: workingObj.addressDistrict,
                 dateOfBirth: workingObj.dateOfBirth,
-                udcPK: workingObj.udcPK,
                 createdBy: workingObj.createdBy,
                 createdDate: 0,
                 lastModificationBy: workingObj.lastModidicationBy,

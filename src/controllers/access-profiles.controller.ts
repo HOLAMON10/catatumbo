@@ -130,7 +130,7 @@ export class AccessProfilesController implements interfaces.Controller {
             typeErrMsg: 'wrong value type on field _id',
           })
           .field('lastModificationUser', 'string', {
-            required: true,
+            required: false,
             validatorErrMsg: 'lastModificationUser is required',
             typeErrMsg: 'wrong value type on field lastModificationUser',
           });

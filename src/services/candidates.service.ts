@@ -539,9 +539,7 @@ export class CandidatesService implements CandidatesServiceInterface {
       if (moment(newObject.dateOfBirth).isValid()) {
         workingObject.dateOfBirth = moment(newObject.dateOfBirth);
       }
-      workingObject.udcPK = newObject.udcPK
-        ? newObject.udcPK
-        : workingObject.udcPK;
+    
       workingObject.lastModificationBy = newObject.lastModificationBy;
       workingObject.lastModificationDate = Date.now();
       workingObject.markModified(CandidateSchema.modelName);

@@ -108,7 +108,7 @@ export class UsersController implements interfaces.Controller {
 		try {
 			let serviceResult: ServiceResultInterface =
 				await this.userSrv.Search(
-					req.body.workingObject,
+					req.body,
 					req.body.populateAll
 				);
 			if (serviceResult.code === 'error') {
@@ -192,10 +192,7 @@ export class UsersController implements interfaces.Controller {
 				lastName: workingObj.lastName,
 				accessProfile: workingObj.accessProfile,
 				allowedPermissions: workingObj.allowedPermissions,
-				dashboardId: workingObj.dashboardId,
-				dashboardType: workingObj.dashboardType,
 				dashboardUrl: workingObj.dashboardUrl,
-				dashboardsList: workingObj.dashboardsList,
 				userType: workingObj.userType,
 				isActive: workingObj.isActive,
 				createdBy: workingObj.createdBy,

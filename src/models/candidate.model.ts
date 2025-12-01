@@ -15,7 +15,6 @@ export interface CandidateDocumentInterface extends CandidateModelInterface, Doc
   addressCounty: string;
   addressDistrict: string;
   dateOfBirth: Date;
-  udcPK?: string;
   createdBy?: any;
   createdDate?: number;
   lastModificationBy?: string;
@@ -65,10 +64,6 @@ const schema = new Schema({
   dateOfBirth: {
     type: Date,
     require: true,
-  },
-  udcPK: {
-    type: String,
-    require: false,
   },
   createdBy: {
     type: ObjectId,
