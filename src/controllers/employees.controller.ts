@@ -13,6 +13,8 @@ import { Request, Response } from 'express';
 import { ApiTypes } from '../apiTypes';
 import { ConstantValues } from '../constantValues';
 
+const PDFDocument = require('pdfkit');
+
 @controller(ConstantValues.employees)
 export class EmployeesController {
   constructor(
@@ -87,17 +89,36 @@ export class EmployeesController {
     return res.status(400).json(result.detail ?? result);
   }
 
-  @httpGet('/export/pdf')
+    @httpGet('/export/pdf')
   public async exportPdf(@request() req: Request, @response() res: Response) {
     const result = await this.employeesService.exportPDF(req.query);
 
     if (result.code === 'success') {
+      const content: string = result.detail ?? '';
+
+      res.status(200);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
         'attachment; filename="employees.pdf"',
       );
-      return res.status(200).send(result.detail ?? '');
+
+      const doc = new PDFDocument({ margin: 40 });
+      doc.pipe(res);
+
+      doc.fontSize(16).text('Listado de empleados', { align: 'left' });
+      doc.moveDown();
+
+      const lines = content
+        .split('\n')
+        .filter((l: string) => l.trim().length > 0);
+
+      lines.forEach((line: string) => {
+        doc.fontSize(10).text(line);
+      });
+
+      doc.end();
+      return;
     }
 
     return res.status(400).json(result.detail ?? result);
