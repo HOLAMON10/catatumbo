@@ -8,90 +8,57 @@ export class DBGateway {
 	public static async testDBConnection() {
 		try {
 			CommonFunctions.PrintConsoleColor(' • connecting to DB ...', PrintColorType.grey);
-			mongoose.connect(process.env.MONGODB_URL, (value: any) => {
-				if (value) {
+
+			const dbUrl = process.env.MONGODB_URL as string;
+			const dbName = dbUrl.split('/')[dbUrl.split('/').length - 1];
+
+			// Modern Mongoose connect() returns a Promise
+			await mongoose
+				.connect(dbUrl)
+				.then(() => {
+					CommonFunctions.PrintConsoleColor(` • connected to database ${dbName}`, PrintColorType.success);
+				})
+				.catch((err: any) => {
 					CommonFunctions.PrintConsoleColor(
-						` ~ error connecting to database ${
-							process.env.MONGODB_URL.split('/')[
-								process.env.MONGODB_URL.split('/').length - 1
-							]
-						}`,
+						` ~ error connecting to database ${dbName}`,
 						PrintColorType.error
 					);
-					return;
-				}
-				CommonFunctions.PrintConsoleColor(
-					` • connected to database ${
-						process.env.MONGODB_URL.split('/')[
-							process.env.MONGODB_URL.split('/').length - 1
-						]
-					}`,
-					PrintColorType.success
-				);
-				mongoose.disconnect();
-			});
-			// .catch((reason: any) => {
-			// 	CommonFunctions.PrintConsoleColor(
-			// 		' ~ database ...',
-			// 		PrintColorType.error
-			// 	);
-			// 	CommonFunctions.PrintConsoleColor(`   -> ${reason}`, PrintColorType.grey);
-			// });
-		} catch (ex) {
-			CommonFunctions.PrintConsoleColor(
-				` ~ error connecting to database ${
-					process.env.MONGODB_URL.split('/')[
-						process.env.MONGODB_URL.split('/').length - 1
-					]
-				}`,
-				PrintColorType.error
-			);
+					CommonFunctions.PrintConsoleColor(`   -> ${err}`, PrintColorType.grey);
+				});
+
+			mongoose.disconnect();
+		} catch (ex: any) {
+			const dbName = process.env.MONGODB_URL?.split('/')[process.env.MONGODB_URL.split('/').length - 1];
+
+			CommonFunctions.PrintConsoleColor(` ~ error connecting to database ${dbName}`, PrintColorType.error);
 			CommonFunctions.PrintConsoleColor(`   -> ${ex}`, PrintColorType.grey);
 		}
 	}
 
-	public static connect() {
+	public static async connect() {
 		try {
 			CommonFunctions.PrintConsoleColor(' • connecting to DB ...', PrintColorType.grey);
-			mongoose.connect(process.env.MONGODB_URL, (value: any) => {
-				if (value) {
-					console.log('value :>> ', value);
+
+			const dbUrl = process.env.MONGODB_URL as string;
+			const dbName = dbUrl.split('/')[dbUrl.split('/').length - 1];
+
+			await mongoose
+				.connect(dbUrl)
+				.then(() => {
+					CommonFunctions.PrintConsoleColor(` • connected to database ${dbName}`, PrintColorType.success);
+				})
+				.catch((err: any) => {
 					CommonFunctions.PrintConsoleColor(
-						` ~ error connecting to database ${
-							process.env.MONGODB_URL.split('/')[
-								process.env.MONGODB_URL.split('/').length - 1
-							]
-						}`,
+						` ~ error connecting to database ${dbName}`,
 						PrintColorType.error
 					);
-					return;
-				}
-				CommonFunctions.PrintConsoleColor(
-					` • connected to database ${
-						process.env.MONGODB_URL.split('/')[
-							process.env.MONGODB_URL.split('/').length - 1
-						]
-					}`,
-					PrintColorType.success
-				);
-			});
-			// .catch((reason: any) => {
-			// 	CommonFunctions.PrintConsoleColor(
-			// 		' ~ database ...',
-			// 		PrintColorType.error
-			// 	);
-			// 	CommonFunctions.PrintConsoleColor(`   -> ${reason}`, PrintColorType.grey);
-			// });
-		} catch (ex) {
+					console.log('value :>> ', err);
+				});
+		} catch (ex: any) {
+			const dbName = process.env.MONGODB_URL?.split('/')[(process.env.MONGODB_URL || '').split('/').length - 1];
+
 			console.log('ex :>> ', ex);
-			CommonFunctions.PrintConsoleColor(
-				` ~ error connecting to database ${
-					process.env.MONGODB_URL.split('/')[
-						process.env.MONGODB_URL.split('/').length - 1
-					]
-				}`,
-				PrintColorType.error
-			);
+			CommonFunctions.PrintConsoleColor(` ~ error connecting to database ${dbName}`, PrintColorType.error);
 			CommonFunctions.PrintConsoleColor(`   -> ${ex}`, PrintColorType.grey);
 		}
 	}
@@ -100,10 +67,7 @@ export class DBGateway {
 		try {
 			mongoose.disconnect();
 		} catch (ex) {
-			CommonFunctions.PrintConsoleColor(
-				' ~ error disconnecting DB connection...',
-				PrintColorType.error
-			);
+			CommonFunctions.PrintConsoleColor(' ~ error disconnecting DB connection...', PrintColorType.error);
 			CommonFunctions.PrintConsoleColor(`   -> ${ex}`, PrintColorType.grey);
 		}
 	}
