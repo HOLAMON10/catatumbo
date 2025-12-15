@@ -117,20 +117,7 @@ export class MeetingRoomsController implements interfaces.Controller {
 				stringNoEmpty: true,
 			});
 
-			if (!updatingRecord) {
-				paramValidator.field('createdBy', 'string', {
-					required: true,
-					validatorErrMsg: 'createdBy is required',
-					typeErrMsg: 'wrong value type on field createdBy',
-				});
-			} else {
-				paramValidator.field('lastModificationUser', 'string', {
-					required: true,
-					validatorErrMsg: 'lastModificationUser is required',
-					typeErrMsg: 'wrong value type on field lastModificationUser',
-				});
-			}
-
+		
 			paramValidator
 				.field('name', 'string', {
 					required: true,

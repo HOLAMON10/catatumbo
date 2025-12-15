@@ -1,6 +1,5 @@
 import * as jwt from 'jsonwebtoken';
-import jwt_decode from 'jwt-decode';
-const jwt_decode = require('jwt-decode').default;
+import { jwtDecode } from "jwt-decode";
 
 import { NextFunction, Request, Response } from 'express';
 
@@ -28,7 +27,6 @@ const verifyAuthorizationCode = (req: Request, res: Response, next: NextFunction
 				return next();
 			}
 		}
-
 		if (!req.headers['authorization']) {
 			return res.status(401).send({
 				code: 'unauthorized',
@@ -36,10 +34,13 @@ const verifyAuthorizationCode = (req: Request, res: Response, next: NextFunction
 			});
 		}
 
+
 		if (verifyToken(req.headers['authorization'])) {
 			const sessionToken =
-				(jwt_decode(req.headers['authorization']) as any).token ||
-				(jwt_decode(req.headers['authorization']) as any).user;
+				(jwtDecode(req.headers['authorization']) as any).token ||
+				(jwtDecode(req.headers['authorization']) as any).user;
+							console.log('here',sessionToken)
+
 			if (!sessionToken) {
 				return res.status(401).send({
 					code: 'unauthorized',

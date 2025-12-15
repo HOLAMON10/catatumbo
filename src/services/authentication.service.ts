@@ -38,37 +38,59 @@ export class AuthenticationService implements AuthenticationServiceInterface {
  
     //#region Private Functions
  
-    private async createRecoveryPasswordToken(email: string): Promise<ServiceResultInterface> {
-        try {
-            const dbResult: UserDocumentInterface = await UserSchema.findOne({
-                email: email.trim(),
-            });
- 
-            if (!dbResult) {
-                throw new CredentialsErrorHandling('user data not found');
-            }
- 
-            if (!dbResult.isActive && !dbResult.isConfirmed) {
-                throw new ValidationError('The request action cannot be performed');
-            }
- 
-            dbResult.verificationToken = CommonFunctions.generateUUID(false);
-            dbResult.keepSessionAlive = false;
-            dbResult.markModified('UserInfo');
-            let updateResult = await dbResult.save();
-            if (updateResult._id) {
-                return {
-                    code: 'success',
-                    detail: dbResult.verificationToken,
-                };
-            } else {
-                throw new NotActionPerformedHandling('token was not generated');
-            }
-        } catch (ex) {
-            throw ex;
-        }
+    private async createRecoveryPasswordToken(
+  email: string
+  ): Promise<ServiceResultInterface> {
+    try {
+      const dbResult: UserDocumentInterface = await UserSchema.findOne({
+        email: email.trim(),
+      });
+
+      if (!dbResult) {
+        throw new CredentialsErrorHandling("user data not found");
+      }
+
+      // 1️⃣ Generate 6-digit token
+      const token = CommonFunctions.generateSixDigitToken();
+      dbResult.verificationToken = token;
+      dbResult.keepSessionAlive = false;
+
+      dbResult.markModified("UserInfo");
+      const updateResult = await dbResult.save();
+
+      if (!updateResult._id) {
+        throw new NotActionPerformedHandling("token was not generated");
+
+
+
+      }
+
+      // 2️⃣ Build the recovery URL
+      const recoveryLink = `${process.env.FRONTEND_URL}/recover`;
+
+      // 3️⃣ Insert data into HTML template
+      const emailHtml = recoveryTokenEmailTemplate
+        .replace("{{firstName}}", dbResult.firstName || "User")
+        .replace("{{email}}", dbResult.email)
+        .replace("{{token}}", token)
+        .replace("{{recoveryLink}}", recoveryLink);
+
+      // 4️⃣ Send email
+      await this.emailService.sendEmail(
+        dbResult.email,
+        "Your Password Recovery Code",
+        emailHtml,
+      );
+
+      return {
+        code: "success",
+        detail: true,
+      };
+
+    } catch (ex) {
+      throw ex;
     }
- 
+  }
     private async modifyPassword(
         _id: string,
         currentPassword: string = null,
@@ -246,6 +268,7 @@ export class AuthenticationService implements AuthenticationServiceInterface {
             return {
                 code: 'success',
                 detail: {
+                    _id:dbResult._id,
                     isConfirmed: dbResult.isConfirmed,
                 },
             };

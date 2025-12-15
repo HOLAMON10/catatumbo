@@ -3,7 +3,8 @@ import { ServiceResultInterface } from '../service-result.interface';
 
 export interface MeetingRoomReservationsServiceInterface {
   CreateRecord(
-    workingObj: MeetingRoomReservationModelInterface
+    workingObj: MeetingRoomReservationModelInterface,
+    email: string
   ): Promise<ServiceResultInterface>;
   ModifyRecord(
     workingObj: MeetingRoomReservationModelInterface

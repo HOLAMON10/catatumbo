@@ -1,14 +1,25 @@
-db.users.insertOne({
-	_id: ObjectId('5ef56fb994740d02672fcdb0'),
-	firstName: 'admin',
-	lastName: 'user',
-	email: 'test@test.com',
-	userType: 'admin',
-	accessProfile: ObjectId('5f0e16218190c20e7885d7a6'),
-	password: '335ba4c0221e9a4a1b2deab494273080',
-	isAdmin: true,
-	isActive: true,
-	creationDate: new Date(),
-});
+db.users.insertOne( {
+        "firstName": "test",
+        "lastName": "test",
+        "email": "testy@gmail.com",
+        "accessProfile": ObjectId("691a8bcf4000a71c7cb96127"),
+        "userType": "admin",
+        "verificationToken": null,
+        "isActive": true,
+        "isConfirmed": false,
+        "keepSessionAlive": false,
+        "__v": 4,
+        "password": "202cb962ac59075b964b07152d234b70",
+        "allowedPermissions": [
+            "userCanCreateNewUser",
+            "userCanModifyExistingUser",
+            "userCanDeactivateUser",
+            "userCanAssignRoles",
+            "userCanModifyRoles",
+            "userCanAccessUserProfiles",
+            "userCanManageAccessLevels"
+        ],
+        "dashboardUrl": "https://charts.mongodb.com/charts-project-0-ipdjkmz/a0b7a829-db37-4f77-8c4f-e90dcb1215e0"
+    });
 
 //password: god$favorites#1

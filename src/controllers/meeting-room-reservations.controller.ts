@@ -25,8 +25,9 @@ export class MeetingRoomsReservationsController implements interfaces.Controller
 	@httpPost('/')
 	public async Create(req: Request, res: Response): Promise<void> {
 		try {
+			console.log(req.body)
 			let serviceResult: ServiceResultInterface = await this.dataSrv.CreateRecord(
-				this.validatePayload(req.body, false)
+				this.validatePayload(req.body.payload, false),req.body.email
 			);
 
 			if (!serviceResult) {
@@ -46,7 +47,7 @@ export class MeetingRoomsReservationsController implements interfaces.Controller
 	public async modify(req: Request, res: Response): Promise<void> {
 		try {
 			let serviceResult: ServiceResultInterface = await this.dataSrv.ModifyRecord(
-				this.validatePayload(req.body, true)
+				this.validatePayload(req.body.payload, true)
 			);
 
 			if (!serviceResult) {
@@ -98,6 +99,7 @@ export class MeetingRoomsReservationsController implements interfaces.Controller
 	@httpPost('/search')
 	public async search(req: Request, res: Response): Promise<void> {
 		try {
+			console.log(req.body)
 			let serviceResult: ServiceResultInterface = await this.dataSrv.Search(
 				req.body.payload,
 				req.body.populateAll
@@ -131,28 +133,6 @@ export class MeetingRoomsReservationsController implements interfaces.Controller
 				stringNoEmpty: true,
 			});
 
-			if (updatingRecord) {
-				paramValidator.field('_id', 'string', {
-					required: true,
-					validatorErrMsg: '_id is required',
-					typeErrMsg: 'wrong value type on field _id',
-				});
-				paramValidator.field('lastModificationBy', 'string', {
-					required: true,
-					validatorErrMsg: 'lastModificationBy is required',
-					typeErrMsg: 'wrong value type on field lastModificationBy',
-				});
-
-				if (!ObjectId.isValid(payload._id)) {
-					throw 'field _id is not a valid object';
-				}
-			} else {
-				paramValidator.field('createdBy', 'string', {
-					required: true,
-					validatorErrMsg: 'createdBy is required',
-					typeErrMsg: 'wrong value type on field createdBy',
-				});
-			}
 
 			paramValidator
 				.field('meetingRoom', 'string', {

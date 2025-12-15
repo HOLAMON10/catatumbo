@@ -1,4 +1,4 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 import {
 	MeetingRoomReservationDocumentInterface,
@@ -13,7 +13,9 @@ import {
 	ValidationError,
 } from '../error-handlers';
 import { ServiceResultInterface } from '../interfaces/service-result.interface';
-
+import { meetingReservationConfirmationEmailTemplate } from '../email-templates';
+import { EmailService } from './email-sender.service';
+import { ApiTypes } from '../apiTypes';
 @injectable()
 export class MeetingRoomReservationsService implements MeetingRoomReservationsServiceInterface {
 	public CreateRecord = this.createRecord;
@@ -24,37 +26,58 @@ export class MeetingRoomReservationsService implements MeetingRoomReservationsSe
 
 	private dbDocument: MeetingRoomReservationDocumentInterface;
 
-	public constructor() {}
-
+	public constructor(
+		@inject(ApiTypes.emailSenderService)
+		private readonly emailService: EmailService
+		) {}
 	private async createRecord(
-		payload: MeetingRoomReservationModelInterface
-	): Promise<ServiceResultInterface> {
-		try {
-			const dbResult = await MeetingRoomsReservationSchema.findOne({
-				meetingRoom: payload.meetingRoom,
-				reservationDate: payload.reservationDate,
-				reservationStartingHour: payload.reservationStartingHour,
-				reservationEndingHour: payload.reservationStartingHour,
-			});
+    payload: MeetingRoomReservationModelInterface,
+	email: string
+): Promise<ServiceResultInterface> {
+    try {
+        const dbResult = await MeetingRoomsReservationSchema.findOne({
+            meetingRoom: payload.meetingRoom,
+            reservationDate: payload.reservationDate,
+            reservationStartingHour: payload.reservationStartingHour,
+            reservationEndingHour: payload.reservationEndingHour,
+        });
 
-			let result: any;
-			if (dbResult) {
-				throw new ValidationError(
-					`The Meeting Room is already reserved between ${payload.reservationStartingHour} and ${payload.reservationEndingHour}`
-				);
-			}
+        if (dbResult) {
+            throw new ValidationError(
+                `The Meeting Room is already reserved between ${payload.reservationStartingHour} and ${payload.reservationEndingHour}`
+            );
+        }
 
-			result = await this.insert(payload);
+        const result = await this.insert(payload);
 
-			return {
-				code: 'success',
-				detail: result,
-			};
-		} catch (ex) {
-			console.log('ex :>> ', ex);
-			throw ex;
-		}
-	}
+        // build meeting link
+        const meetingLink = `${process.env.FRONTEND_URL}/meetings/${result._id}`;
+
+        // fill email template
+        const htmlBody = meetingReservationConfirmationEmailTemplate
+            .replace(/{{meetingTitle}}/g, 'Meeting Reservation')
+            .replace(/{{meetingDate}}/g, payload.reservationDate)
+            .replace(/{{meetingTime}}/g, `${payload.reservationStartingHour} – ${payload.reservationEndingHour}`)
+            .replace(/{{meetingLocation}}/g, payload.meetingRoom)
+            .replace(/{{meetingLink}}/g, meetingLink);
+
+        // send confirmation email
+        await this.emailService.sendEmail(
+            email,
+            'Your Meeting Room Is Reserved',
+            htmlBody
+        );
+
+        return {
+            code: 'success',
+            detail: result,
+        };
+    } catch (ex) {
+        console.log('ex :>> ', ex);
+        throw ex;
+    }
+}
+
 
 	private async modifyRecord(
 		payload: MeetingRoomReservationModelInterface
@@ -123,7 +146,7 @@ export class MeetingRoomReservationsService implements MeetingRoomReservationsSe
 				const populateOptions: any[] = [
 					{
 						path: 'meetingRoom',
-						select: ['name'],
+						select: ['name','schedule'],
 						model: 'MeetingRoom',
 						strictPopulate: false,
 					},
